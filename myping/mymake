@@ -1,0 +1,2 @@
+my_ping:
+	gcc -o my_ping my_ping.c sig_alarm.c readloop.c send_v4.c in_chsum.c proc_v4.c tv_sub.c 

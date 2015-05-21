@@ -1,0 +1,4 @@
+First:
+gcc -o ping my_ping.c sig_alarm.c readloop.c send_v4.c in_cksum.c proc_v4.c tv_sub.c
+
+then ./ping Host|DomainName
