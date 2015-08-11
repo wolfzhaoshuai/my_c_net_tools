@@ -10,3 +10,5 @@
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
+#include <linux/if.h>
+#include <linux/sockios.h>

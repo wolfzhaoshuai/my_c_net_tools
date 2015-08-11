@@ -144,6 +144,24 @@ void my_callback(u_char *user,const struct pcap_pkthdr *header,const u_char *pac
 
 }
 
+pcap_selected_interface(int arg_number,char **args){
+	int sock;
+    int error;
+    if( (sock=socket(AF_INET,SOCK_DGRAM,0))<0){
+        perror("socket create error");
+        exit(1);
+    }
+	struct ifreq ifr;
+	memcpy(ifr.ifr_name,args[2],sizeof(args[2])+1);
+    error=ioctl(sock,SIOCGIFFLAGS,&ifr);
+    if(error){
+        printf("The interface %s is not exists\n",args[2]);
+        exit(1);
+    }
+	return args[2];
+}
+
+
 
 int main(int argc,char **argv){
   /*main function*/
@@ -161,14 +179,20 @@ int main(int argc,char **argv){
   const u_char * packet;
   u_char *args;
 
-  if(argc<2){
-    fprintf(stdout,"Usage: filter \"expression\"\n");
-    exit(1);
+  if(argc!=2 && argc!=4){
+	printf("Usage: ./mytcpdump [options] filter_expression\n");
+	printf("Options:\n");
+	printf("-i interfacename\n");
+	exit(1);
   }
 
-  if( (dev=pcap_lookupdev(errbuf))==NULL){
-    fprintf(stdout,"%s\n",errbuf);
-    exit(1);
+  if(argc==4 && strncmp(argv[1],"-i",2)==0){
+	dev=pcap_selected_interface(argc,argv);
+  }else if(argc==2){
+    if( (dev=pcap_lookupdev(errbuf))==NULL){
+      fprintf(stdout,"%s\n",errbuf);
+      exit(1);
+    }
   }
 
   if( pcap_lookupnet(dev,&netcode,&maskcode,errbuf)<0){
@@ -196,22 +220,21 @@ int main(int argc,char **argv){
       fprintf(stdout,"%s\n",pcap_geterr(handler));
       exit(1);
     }
-    if( pcap_setfilter(handler,&fp)<0){
+  }else if(argc==4){
+	if( pcap_compile(handler,&fp,argv[3],0,maskcode)<0){
       fprintf(stdout,"%s\n",pcap_geterr(handler));
       exit(1);
     }
-   }
+  }
 
-  if(argc==2){
-    if( pcap_loop(handler,-1,(pcap_handler)my_callback,args)<0){
+  if( pcap_setfilter(handler,&fp)<0){
+    fprintf(stdout,"%s\n",pcap_geterr(handler));
+    exit(1);
+  }
+
+  if( pcap_loop(handler,-1,(pcap_handler)my_callback,args)<0){
       fprintf(stdout,"%s\n",pcap_geterr(handler));
       exit(1);
-    }
-  }else{
-    if( pcap_loop(handler,atoi(argv[1]),(pcap_handler)my_callback,args)<0){
-      fprintf(stdout,"%s\n",pcap_geterr(handler));
-      exit(1);
-    }
   }
 
   exit(0);
